@@ -1,6 +1,8 @@
+/**
+ * @type {import('next').NextConfig}
+ */
 const nextConfig = {
-  experimental: {
-    turbo: false,
-  },
+  // No 'output: export' here!
 };
+
 module.exports = nextConfig;
