@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Error parsing the file', details: err.message });
     }
 
-    // Get the file (handle both array and object)
+    // Handle both array and object for files.file
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
     if (!file) {
       console.error("No file received. files object:", files);
@@ -66,6 +66,7 @@ export default async function handler(req, res) {
       Key: Date.now().toString() + '-' + (file.originalFilename || file.name),
       Body: fileContent,
       ContentType: file.mimetype || file.type,
+      // ACL: 'public-read', // Remove this line if your bucket has ACLs disabled
     };
 
     try {
