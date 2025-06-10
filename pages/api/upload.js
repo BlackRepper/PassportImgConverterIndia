@@ -16,6 +16,7 @@ const s3 = new AWS.S3({
 });
 
 export default async function handler(req, res) {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -23,14 +24,14 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Only allow POST
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST', 'OPTIONS']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  // Use OS temp dir for compatibility (especially on Windows)
   const form = new IncomingForm({ keepExtensions: true, uploadDir: os.tmpdir() });
 
   form.parse(req, async (err, fields, files) => {
@@ -46,7 +47,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Try both possible properties for the file path
     const filePath = file.filepath || file.path;
     if (!filePath) {
       console.error("File path not found. file object:", file);
