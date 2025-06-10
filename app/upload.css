@@ -1,0 +1,11 @@
+.upload-container {
+  position: absolute;
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: center;
+       /* vertical center */
+ top: 50%;
+ left: 39%;
+}
+
+ 

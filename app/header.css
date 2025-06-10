@@ -1,0 +1,18 @@
+.color-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 20vh;              /* fill up to 20% of screen height */
+  background-color: #ff5c5c; /* your red color */
+  z-index: -1;               /* place it behind other content */
+}
+
+.f-line {
+  position: absolute;
+  top: 20vh;                 /* place the line right after the colored block */
+  width: 100vw;
+  border: none;
+  border-top: 2px solid #333;
+  margin: 0;
+}

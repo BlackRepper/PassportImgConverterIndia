@@ -1,0 +1,12 @@
+.page {
+  position: relative;
+  height: 100vh;
+}
+
+.positioned {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);/* shifts it back by half its own size */
+  font-size: 40px; 
+}
