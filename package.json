@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1692.0",
+    "formidable": "^3.5.4",
     "multer": "^2.0.1",
     "multer-s3": "^2.10.0",
     "next": "15.3.3",
