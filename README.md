@@ -1,148 +1,79 @@
-# Project Documentation: PassportSnap - Serverless Passport Photo Converter
+## 📸 Serverless Passport Photo Converter (India Standard)
 
-## 1\. Project Overview
+An event-driven, cloud-native application to automatically convert user-uploaded images to official Indian passport/visa photo specifications ($35\text{mm} \times 45\text{mm}$) using a React frontend and Python-based AWS Lambda processing.
 
-The **PassportSnap** application provides a seamless, automated, and serverless solution for converting user-uploaded images into compliant, standard passport-sized photographs. The application leverages a **React** frontend for a smooth user experience and **AWS S3/Lambda** for reliable, event-driven processing.
-
-### 1.1. Goal
-
-To automatically resize, crop, and convert an uploaded image into a compliant passport photograph (e.g., Indian Passport size) and initiate an automatic download of the final image to the user's browser, all without requiring a dedicated server.
-
-### 1.2. Key Features
-
-  * **Serverless Architecture**: Low operational cost and high scalability using AWS Lambda and S3.
-  * **Event-Driven Processing**: Image conversion is triggered automatically upon S3 upload.
-  * **Intuitive Frontend**: Built with React for easy image selection and upload.
-  * **Automatic Download**: Final processed image is immediately served back to the user for download.
+[](https://reactjs.org/)
+[](https://aws.amazon.com/s3/)
+[](https://aws.amazon.com/lambda/)
+[](https://www.python.org/)
+[](https://pypi.org/project/Pillow/)
 
 -----
 
-## 2\. Architecture & Data Flow
+## 💡 Project Overview
 
-The architecture follows a classic serverless pattern, utilizing S3 as both storage and an event source.
+This project implements a fully serverless, event-driven architecture to provide an instant passport photo conversion service. The goal is to deliver the processed photo to the user's browser immediately after processing, providing a seamless user experience.
 
-### 2.1. Architectural Components
+### Key Features:
+
+  * **Serverless Efficiency:** Utilizes AWS Lambda and S3 for cost-effective and auto-scaling image processing.
+  * **React User Interface:** A simple, modern frontend for effortless image selection and upload (referencing the [PassportImgConverterIndia](https://github.com/BlackRepper/PassportImgConverterIndia) repository).
+  * **Automatic Trigger:** An **S3 event** triggers the Python processing function upon file upload.
+  * **Indian Standard Compliance:** The Python Lambda function is specifically configured to output images in the required **$35\text{mm} \times 45\text{mm}$** dimensions.
+  * **Instant Download:** The frontend actively monitors for the processed image in S3 and automatically initiates the download to the user's browser.
+
+-----
+
+## 🏗️ Architecture and Data Flow
+
+The entire workflow is automated, starting from the user's browser and ending with a final download from S3.
+
+1.  **React Frontend:** User selects and uploads the original image file.
+2.  **S3 Source Bucket:** The original image is stored here. This bucket is configured with an event notification.
+3.  **S3 Trigger ($\rightarrow$ Lambda):** An `s3:ObjectCreated` event triggers the Lambda function.
+4.  **AWS Lambda (Python):** The function runs the image processing logic (download, resize, crop, save as $35\text{mm} \times 45\text{mm}$).
+5.  **S3 Destination Bucket:** The newly processed passport image is uploaded here.
+6.  **React Frontend:** Polls the Destination Bucket. Once the processed file is detected, it generates a presigned URL and forces the automatic download.
+
+-----
+
+## 💻 Tech Stack
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Frontend** | React, AWS Amplify/SDK | User interface, image selection, and direct S3 upload. |
-| **Source S3 Bucket** | Amazon S3 | Stores the original, raw user-uploaded image. |
-| **Image Processor** | AWS Lambda (Python) | **Core business logic**: Triggered by S3 PUT event; handles resizing, cropping, and conversion. |
-| **Destination S3 Bucket** | Amazon S3 | Stores the final, processed passport-sized image. |
-| **API Gateway (Optional)** | AWS API Gateway | Used to send a notification/trigger to the frontend once the image is ready for download. |
-
-### 2.2. Data Flow Diagram
-
-The application follows a four-step, event-driven process:
-
-1.  **Upload (React → S3)**: The user selects an image on the React app. The app uses the AWS SDK to securely upload the original image to the **Source S3 Bucket**.
-2.  **Trigger (S3 → Lambda)**: The S3 `s3:ObjectCreated:Put` event triggers the **Python Lambda Function**. The event data includes the file name and bucket location.
-3.  **Process & Store (Lambda → S3)**:
-      * The Lambda function downloads the original image.
-      * It processes the image (resizing, cropping) using a library like **Pillow**.
-      * The converted image is uploaded to the **Destination S3 Bucket**.
-4.  **Download (S3 → React)**: Once the processed image is stored, the Lambda (or a subsequent service) notifies the frontend. The React app then generates a temporary, signed URL for the processed image and initiates the automatic download in the user's browser.
+| **Frontend** | `React.js` | User interface, direct S3 upload, and automatic download logic. |
+| **Storage** | `Amazon S3` | Used for both raw uploads (Source) and processed files (Destination). |
+| **Compute** | `AWS Lambda` (Python 3.x) | Executes serverless image resizing and conversion. |
+| **Image Processing** | `Pillow` / `OpenCV` | Python libraries essential for precise image manipulation. |
+| **Download Mechanism** | `AWS SDK` / `Presigned URLs` | Enables the secure and automatic download of the final image. |
 
 -----
 
-## 3\. Technology Stack
+## 🛠️ Implementation Steps
 
-### 3.1. Frontend
+### 1\. AWS Cloud Setup
 
-  * **Framework**: React (using create-react-app or similar).
-  * **Styling**: CSS/Sass/Tailwind (specific to your implementation).
-  * **AWS Integration**: AWS Amplify or direct AWS SDK for JavaScript (to handle S3 uploads and secure temporary downloads).
-  * **Repository**: [BlackRepper/PassportImgConverterIndia](https://github.com/BlackRepper/PassportImgConverterIndia)
+1.  **S3 Buckets:** Create two buckets (`Source` and `Destination`). Configure **CORS** policies on both to allow requests from your React application's domain.
+2.  **IAM Role:** Create an **IAM Execution Role** for Lambda granting it `s3:GetObject` on the **Source Bucket** and `s3:PutObject` on the **Destination Bucket**.
+3.  **Lambda Function:**
+      * Create a Python Lambda function.
+      * Create a **Lambda Layer** containing necessary image processing dependencies (like Pillow, as they are not native to the standard Python runtime).
+      * **Configure Trigger:** Add the **S3 Source Bucket** as a trigger, specifically for `ObjectCreated` events.
+      * The Python handler code will read the object, process it to $35\text{mm} \times 45\text{mm}$, and write it to the **Destination Bucket**.
 
-### 3.2. Backend (AWS Serverless)
+### 2\. React Frontend Integration
 
-  * **Compute**: AWS Lambda (Python 3.x)
-  * **Image Processing Library**: **Pillow** (Python Imaging Library).
-  * **Storage**: Amazon S3 (Two Buckets: Source/Raw and Destination/Processed).
-  * **Infrastructure as Code (Recommended)**: AWS SAM or Terraform (for reliable deployment).
+The frontend (as found in the [linked repo](https://github.com/BlackRepper/PassportImgConverterIndia)) needs to be modified for the full E2E flow:
 
------
-
-## 4\. Setup and Deployment
-
-This section outlines the steps required to get the application running.
-
-### 4.1. AWS Infrastructure Setup (Backend) Examples
-
-1.  **Create S3 Buckets**:
-      * Create **`passport-snap-raw-images`** (Source Bucket).
-      * Create **`passport-snap-processed-images`** (Destination Bucket).
-2.  **Create Lambda Function (Python)**:
-      * Write the Python code using **Pillow** to perform the conversion logic (resize, crop to required dimensions, and save with a standard format/quality).
-      * **Lambda Handler Logic**:
-          * Receive S3 event data.
-          * Get the object key/name.
-          * Download the image from the Source Bucket.
-          * Process the image.
-          * Upload the processed image to the Destination Bucket.
-      * Package the function with the **Pillow** dependency.
-3.  **Configure IAM Role**:
-      * The Lambda's execution role **must** have permissions for:
-          * `s3:GetObject` on the **Source Bucket**.
-          * `s3:PutObject` on the **Destination Bucket**.
-          * CloudWatch Logs access.
-4.  **Set S3 Trigger**:
-      * In the AWS console (or via IAC), configure the **`passport-snap-raw-images`** (Source) bucket to trigger the Lambda function on the `ObjectCreated (Put)` event.
-
-### 4.2. Frontend Setup (React)
-
-1.  **Clone the Repository**:
-
-    ```bash
-    git clone https://github.com/BlackRepper/PassportImgConverterIndia
-    cd PassportImgConverterIndia
-    ```
-
-2.  **Install Dependencies**:
-
-    ```bash
-    npm install
-    ```
-
-3.  **Configure AWS Credentials**:
-
-      * The frontend requires the **AWS Region**, the **Source S3 Bucket Name**, and appropriate **IAM Credentials** (or a Cognito Identity Pool) to securely upload files directly to S3.
-      * Update environment variables or configuration files with these details.
-
-4.  **Implement Download Polling/Notification**:
-
-      * The React code needs a mechanism to detect when the processed image is ready. Options include:
-          * **Polling**: The frontend periodically checks the Destination S3 bucket for the file name.
-          * **Real-time**: The Lambda function publishes a message to an **SNS topic** or **DynamoDB table**, and the React app subscribes to updates via **WebSockets** or **API Gateway**.
-
-5.  **Run the Application**:
-
-    ```bash
-    npm start
-    ```
+1.  **File Upload:** Implement the logic to directly upload the file to the S3 **Source Bucket** (preferably using **AWS Cognito** for temporary credentials or a pre-signed PUT URL).
+2.  **Start Polling:** Immediately after the S3 upload succeeds, the React component must enter a loop (polling) that repeatedly checks the **Destination Bucket** for the new file using the predictable key (e.g., `processed/{original_filename}`).
+3.  **Trigger Download:** Once the file is found:
+      * Retrieve a time-limited **Presigned GET URL** for the processed S3 object.
+      * Programmatically create an HTML anchor tag (`<a>`), set its `href` to the presigned URL, set the `download` attribute, and simulate a click event to force the download.
 
 -----
 
-## 5\. Implementation Details
+## 🔒 Security Note
 
-### 5.1. Python Lambda (Image Processing)
-
-The core logic must handle standard passport dimensions. For **Indian Passport photos**, the requirements are:
-
-  * **Size**: 35mm x 45mm (equivalent to 350 x 450 pixels at 100 DPI).
-  * **Face Coverage**: The face should cover 70-80% of the photograph.
-
-The Pillow library will be used for:
-
-1.  Opening the image.
-2.  Resizing to the target dimensions.
-3.  Ensuring the output format is JPEG/JPG.
-4.  Writing the processed image back to a memory stream before uploading to S3.
-
-### 5.2. Frontend Download Logic
-
-The successful delivery of the final image requires the React application to generate a **presigned URL** for the processed image in the Destination S3 bucket.
-
-1.  The React app detects the file is ready (via polling or notification).
-2.  It uses the AWS SDK to request a temporary, time-limited **Presigned URL** for the object.
-3.  It sets the browser's location to this URL, which forces the automatic download of the passport photo.
+  * **Never** hardcode sensitive AWS keys in your React frontend. Use **Cognito Identity Pools** to provide users with short-lived, restricted IAM roles for S3 interaction.
+  * The Lambda's IAM role must follow the **Principle of Least Privilege**, only allowing the minimum necessary S3 actions (`GetObject` and `PutObject`) on the designated buckets.
